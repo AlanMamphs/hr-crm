@@ -33,3 +33,20 @@ def request_created(sender, **kwargs):
             'body': request_name
         }
         device.send_message(**message)
+
+
+def vacancy_created(sender, **kwargs):
+    if kwargs['created']:
+        device = FCMDevice.objects.all()
+        vacancy_name = kwargs['instance'].position.name
+
+def publication_created(sender, **kwargs):
+
+    if kwargs['created']:
+        device = FCMDevice.objects.all()
+        vacancy_name = kwargs['instance'].name
+        message = {
+            'title': 'Vacancy Published',
+            'body': vacancy_name
+        }
+        device.send_message(**message)

@@ -6,6 +6,10 @@ from django.db import models
 from django.urls import reverse
 
 from apps.requests.models import Request
+from apps.notifications.notifications import vacancy_created, publication_created
+
+from django.db.models.signals import post_save
+
 
 User = get_user_model()
 
@@ -30,8 +34,13 @@ class Vacancy(models.Model):
     image = models.ImageField(upload_to='media', null=True)
     responsibilities = models.TextField(null=True)
     comments = models.TextField(null=True)
+
+    facebook = models.BooleanField(default=False)
+    diesel = models.BooleanField(default=False)
+    jobkg = models.BooleanField(default=False)
+
     created = models.DateTimeField(auto_now_add=True)
-    last_published = models.DateTimeField(auto_now=True)
+    modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         default_related_name = 'vacancies'
@@ -41,19 +50,20 @@ class Vacancy(models.Model):
         return reverse('v1:vacancy-detail', kwargs={'pk': self.id})
 
 
+post_save.connect(receiver=vacancy_created, sender=Vacancy)
+
 class Publication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.PROTECT)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT)
-    created = models.DateTimeField(auto_now_add=True)
-    facebook = models.BooleanField(default=False)
-    facebook_url = models.URLField(null=True)
-    diesel_exist = models.BooleanField(default=False)
-    diesel_url = models.URLField(default=True)
-    jobkg_exist = models.BooleanField(default=False)
-    jobkg_url = models.URLField(null=True)
-
+    message = models.CharField(max_length=100, null=True)
+    publication_service = models.CharField(max_length=20, null=True)
+    status = models.CharField(max_length=20, null=True)
+    url = models.URLField(null=True)
+    created = models.DateTimeField(auto_now_add=True, null=True)
+ 
     class Meta:
         default_related_name = 'publications'
 
     def get_absolute_url(self):
         return reverse('v1:publication-detail', kwargs={'pk': self.id})
+
+post_save.connect(receiver=publication_created, sender=Publication)

@@ -33,6 +33,7 @@ class RabbitMQ:
         self.channel = self.connection.channel()
         self.queue = ''
         self.response = None
+        self.uuid = None
 
     @staticmethod
     def message_to_server(query_set, serializer):
@@ -84,9 +85,14 @@ class RabbitMQ:
         return self.response
 
     def on_response(self, ch, method, properties, body):
-        print('I have got the messsage from server')
-        self.response = body
+        print('I have got the messsage from server + Hey ehye')
+        content = body.decode('utf-8')
+        content = json.loads(content)
+        if content['uuid'] == self.uuid:
+            self.response = body
 
+        print(self.response)
+        return self.response
 
 
     def call_java(self, queryset=None, serializer=None, exchange_name='', exchange_type='topic', q_receiving='',
@@ -101,10 +107,9 @@ class RabbitMQ:
         if queryset and serializer:
             message = self.message_to_server(queryset, serializer)
             cor_id = json.loads(message)
-            uuid = cor_id['uuid']
+            self.uuid = cor_id['uuid']
         else:
             message = message
-            uuid = ''
 
         self.channel.basic_consume(self.on_response, no_ack=True,
                                    queue=self.q_receiving)
@@ -112,17 +117,18 @@ class RabbitMQ:
         self.channel.basic_publish(exchange=exchange_name,
                                    routing_key=self.q_sending,
                                    properties=pika.BasicProperties(
-                                       delivery_mode=2,  # make message persistent
-                                       correlation_id=uuid,
+                                       delivery_mode=2,  
                                        content_type='json'
                                    ),
                                    body=message)
 
         while self.response is None:
             self.connection.process_data_events()
-        
+        print(self.response)
         self.connection.close()
-        return self.response
+
+
+        return self.response 
 
         
 

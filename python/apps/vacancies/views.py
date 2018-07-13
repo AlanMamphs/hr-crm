@@ -8,6 +8,7 @@ from .serializers import VacancyListSerializer, VacancyCreateUpdateSerializer, V
 
 from .tasks import send_message_to_java
 from django.contrib import messages
+
 class VacancyListView(generics.ListCreateAPIView):
     queryset = Vacancy.objects.all()
     serializer_class = VacancyListSerializer
@@ -33,9 +34,9 @@ class PublicationList(generics.ListCreateAPIView):
         data = request.data
         queryset = Vacancy.objects.get(pk=1)
         send_message_to_java.delay(queryset, JavaVacancySerializer)
-        messages.success(self.request, "We are publicating. wait a moment and refresh")
         
-        return Response(data, status="HTTP_201_CREATED")
+        
+        return Response(status=HTTP_200_OK)
 
 class PublicationDetail(generics.RetrieveAPIView):
     queryset = Publication.objects.all()
